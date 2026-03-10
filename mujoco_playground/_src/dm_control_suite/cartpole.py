@@ -144,7 +144,10 @@ class Balance(mjx_env.MjxEnv):
     qpos = self._reset_randomize(rng)
 
     rng, rng1 = jax.random.split(rng, 2)
-    qvel = 0.01 * jax.random.normal(rng1, (self.mjx_model.nv,))
+    if self._vision:
+      qvel = 0.5 * jax.random.normal(rng1, (self.mjx_model.nv,))
+    else:
+      qvel = 0.01 * jax.random.normal(rng1, (self.mjx_model.nv,))
 
     data = mjx_env.make_data(
         self.mj_model,
