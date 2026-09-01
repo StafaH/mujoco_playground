@@ -95,9 +95,9 @@ def wrap_for_brax_training(
 ) -> Wrapper:
   """Common wrapper pattern for all brax training agents.
 
-  Environments that implement `defer_rendering()` and
-  `render_observation(data, obs)` render after episode bookkeeping and
-  autoreset, so cached reset state does not contain pixel observations.
+  Environments that implement `defer_rendering()` and `render_state(state)`
+  render after episode bookkeeping and autoreset, so cached reset state does
+  not contain pixel observations.
 
   Args:
     env: environment to be wrapped
@@ -114,8 +114,8 @@ def wrap_for_brax_training(
     environment did not already have batch dimensions, it is additional Vmap
     wrapped.
   """
-  defer_rendering = hasattr(env, 'defer_rendering') and hasattr(
-      env, 'render_observation'
+  defer_rendering = hasattr(env, 'defer_rendering') and (
+      hasattr(env, 'render_state') or hasattr(env, 'render_observation')
   )
   if defer_rendering:
     env.defer_rendering()
@@ -149,8 +149,11 @@ class DeferredVisionWrapper(Wrapper):
   def _render(self, state: mjx_env.State) -> mjx_env.State:
     info = dict(state.info)
     info[self._OBS_KEY] = state.obs
+    state = state.replace(info=info)
+    if hasattr(self.unwrapped, 'render_state'):
+      return self.unwrapped.render_state(state)
     obs = self.unwrapped.render_observation(state.data, state.obs)
-    return state.replace(obs=obs, info=info)
+    return state.replace(obs=obs)
 
 
 class BraxAutoResetWrapper(Wrapper):

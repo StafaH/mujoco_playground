@@ -51,8 +51,12 @@ class WrapperTest(parameterized.TestCase):
       def defer_rendering(self):
         self.rendering_deferred = True
 
-      def render_observation(self, data, obs):
-        return {'pixels/view_0': data.qpos[..., :1], 'state': obs}
+      def render_state(self, state):
+        obs = {
+            'pixels/view_0': state.data.qpos[..., :1],
+            'state': state.obs,
+        }
+        return state.replace(obs=obs)
 
       def reset(self, key):
         state = self._env.reset(key)
